@@ -13,7 +13,7 @@ HANDLE g_hEvent = CreateEvent(NULL, true, false, NULL);
 
 list<jobject> observers;
 
- CThostFtdcMdApi *pUserApi = CThostFtdcMdApi::CreateFtdcMdApi();
+// CThostFtdcMdApi *pUserApi = CThostFtdcMdApi::CreateFtdcMdApi();
  CThostFtdcTraderApi *traderInstance = CThostFtdcTraderApi::CreateFtdcTraderApi();
  TraderEventHandler th(traderInstance);
 

@@ -9,7 +9,7 @@
 using namespace std;
 static JavaVM * cachedJvm;
 HANDLE g_hEvent = CreateEvent(NULL, true, false, NULL);
-
+int iNextOrderRef = 0;
 
 list<jobject> observers;
 
@@ -48,6 +48,7 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendLoginMes
 		printf("Login sent successfully");
 		WaitForSingleObject(g_hEvent, INFINITE);
 		ResetEvent(g_hEvent);
+		printf("returning from login request");
 		//traderInstance -> Release();
 
 }
@@ -221,7 +222,6 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendTradeReq
 			env->DeleteLocalRef(j_volumeCondition);
 			env->ReleaseStringUTFChars(j_volumeCondition, c_volumeCondition);
 			printf("sending trade request");
-			WaitForSingleObject(g_hEvent, INFINITE);
 	  
 }
 
@@ -231,6 +231,20 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendOrderAct
 
 
 }
+
+JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendSettlementReqest
+  (JNIEnv *env, jobject callerObject, jstring brokerID, jstring userID){
+		CThostFtdcSettlementInfoConfirmField settlement;
+		memset(&settlement,0,sizeof(settlement));
+		const char *c_brokerID = env->GetStringUTFChars(brokerID, false);
+		const char *c_userID = env->GetStringUTFChars(userID, false);
+		strcpy_s(settlement.BrokerID,c_brokerID);
+		strcpy_s(settlement.InvestorID, c_userID);
+		traderInstance->ReqSettlementInfoConfirm(&settlement, 0);
+		env->ReleaseStringUTFChars(brokerID, c_brokerID);
+		env->ReleaseStringUTFChars(userID, c_userID);
+}
+
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_subscribeListener
   (JNIEnv *env, jobject callerObject, jobject subscriber){

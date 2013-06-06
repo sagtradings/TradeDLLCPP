@@ -47,6 +47,16 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_subscribeLis
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_unSubscribeListener
   (JNIEnv *, jobject, jobject);
 
+/*
+ * Class:     nativeinterfaces_TradingNativeInterface
+ * Method:    sendSettlementReqest
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendSettlementReqest
+  (JNIEnv *, jobject, jstring, jstring);
+
+
+
 #ifdef __cplusplus
 }
 #endif

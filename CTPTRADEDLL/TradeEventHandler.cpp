@@ -10,29 +10,67 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			printf("an error happened");
 		}
 
+		virtual void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast){
+			printf("Settlement confirmed");	
+			printf("OnRtntrade\n");
+
+			JNIEnv * g_env;
+			jint success = cachedJvm -> GetEnv((void**)&g_env, JNI_VERSION_1_6);
+			if(success != JNI_OK){
+			//	printf("attempting to resync jvm to thread\n");
+				jint attachSuccess = cachedJvm ->AttachCurrentThread((void**)&g_env, NULL);
+				if(attachSuccess == 0){
+					//printf("resync successful!\n");
+				}
+				else{
+					//printf("resync unsuccessful\n");
+					return;
+				}
+			}
+			list<jobject>::iterator it = observers.begin();			
+			while (it != observers.end()) {
+				
+				printf("getting subscribed object and onRtnTrade method ID\n");
+				jobject &obj = *it;
+				jclass cls = g_env->GetObjectClass(obj);
+				jmethodID mid = g_env->GetMethodID(cls, "onSettlementResponse", "(Lbo/SettlementResponse;)V");
+
+				printf("Creating Parameter Object SettlementResponse\n");
+				jclass parameter = g_env->FindClass("bo/SettlementResponse");
+			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
+				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
+
+				printf("getting ID's 1 - 5\n");
+				jmethodID brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
+				jmethodID confirmDateId = g_env->GetMethodID(parameter, "setConfirmDate", "(Ljava/lang/String;)V");
+				jmethodID confirmTimeId = g_env->GetMethodID(parameter, "setConfirmDate", "(Ljava/lang/String;)V");
+				jmethodID investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
+
+				printf("invoking setters 1 - 5\n");
+				jstring j_brokerId = g_env->NewStringUTF(pSettlementInfoConfirm->BrokerID);
+				g_env->CallVoidMethod(paramObject, brokerIDId, j_brokerId);
+				jstring j_confirmDate = g_env->NewStringUTF(pSettlementInfoConfirm->ConfirmDate);
+				g_env->CallVoidMethod(paramObject, brokerIDId, j_confirmDate);
+				jstring j_confirmTime = g_env->NewStringUTF(pSettlementInfoConfirm->ConfirmTime);
+				g_env->CallVoidMethod(paramObject, confirmTimeId, j_confirmTime);
+				jstring j_investorID = g_env->NewStringUTF(pSettlementInfoConfirm->InvestorID);
+				g_env->CallVoidMethod(paramObject, investorIDId, j_investorID);
+
+
+				if (mid == 0) {
+					//printf("mid was 0!!!\n");
+					return;
+				}
+
+				g_env->CallVoidMethod(obj, mid, paramObject);
+				it++;
+
+			}
+		}
+
 		virtual void OnFrontConnected(){
 			printf("the front is connected");
 			SetEvent(g_hEvent);
-			//CThostFtdcReqUserLoginField reqUserLogin;
-			// get BrokerID
-			
-			//const char  *userID = "00000008";
-			//const char  *password = "123321";
-			//const char  *brokerID = "1013";
-			//strcpy_s(reqUserLogin.UserID, userID);
-		
-			//strcpy_s(reqUserLogin.Password, password);
-			//strcpy_s(reqUserLogin.BrokerID, brokerID);
-			
-			//delete userID;
-			//delete password;
-			//delete brokerID;
-
-
-			// send the login request
-			//m_pUserApi->ReqUserLogin(&reqUserLogin, 0);
-			
-
 		}
 
 		virtual void OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast){
@@ -50,13 +88,26 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 					return;
 				}
 			}
+			int maxOrderRev = atoi(pRspUserLogin->MaxOrderRef);
+
+			printf("Creating Parameter Object LoginResponse\n");
+			jclass parameter = g_env->FindClass("bo/LoginResponse");
+			jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
+			jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
+
+			printf("getting ID's 1 - 5\n");
+			jmethodID maxOrderId = g_env->GetMethodID(parameter, "setMaxOrder", "(I)V");
+
+			printf("invoking setters 1 - 5\n");
+			g_env->CallVoidMethod(paramObject, maxOrderId, maxOrderRev + 1);
+
 			printf("notifyinglisteners\n");
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
-				jmethodID mid = g_env->GetMethodID(cls, "onRspUserLogin", "()V");
-								g_env->CallVoidMethod(obj, mid);
+				jmethodID mid = g_env->GetMethodID(cls, "onRspUserLogin", "(Lbo/LoginResponse;)V");
+								g_env->CallVoidMethod(obj, mid, paramObject);
 				it++;
 			}
 			SetEvent(g_hEvent);
@@ -87,7 +138,7 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				printf("getting subscribed object and onRtnTrade method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
-				jmethodID mid = g_env->GetMethodID(cls, "TradeDataResponse", "(Lbo/TradeDataResponse;)V");
+				jmethodID mid = g_env->GetMethodID(cls, "onRtnTradingData", "(Lbo/TradeDataResponse;)V");
 
 				printf("Creating Parameter Object TradeDataResponse\n");
 				jclass parameter = g_env->FindClass("bo/TradeDataResponse");
@@ -103,7 +154,7 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 
 				printf("getting method ID's 6 - 10\n");
 				jmethodID directionId = g_env->GetMethodID(parameter, "setDirection", "(Ljava/lang/String;)V");
-				jmethodID exchangeIDId = g_env->GetMethodID(parameter, "setExhangeID", "(Ljava/lang/String;)V");
+				jmethodID exchangeIDId = g_env->GetMethodID(parameter, "setExchangeID", "(Ljava/lang/String;)V");
 				jmethodID exchangeInstIDId = g_env->GetMethodID(parameter, "setExchangeInstID", "(Ljava/lang/String;)V");
 				jmethodID hedgeFlagId = g_env->GetMethodID(parameter, "setHedgeFlag", "(Ljava/lang/String;)V");
 				jmethodID instrumentIDId = g_env->GetMethodID(parameter, "setInstrumentID", "(Ljava/lang/String;)V");

@@ -226,10 +226,100 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendTradeReq
 }
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendOrderAction
-  (JNIEnv *env, jobject callerObject, jstring brokerId, jstring password, jstring investorId, jobject OrderActionRequest){
-	  printf("order action!");
+  (JNIEnv *env, jobject callerObject, jstring brokerId, jstring password, jstring investorId, jobject orderActionRequest){
+	  printf("order action!\n");
+	  CThostFtdcInputOrderActionField orderActionField;
+	  memset(&orderActionField,0,sizeof(orderActionField));
 
+	  printf("getting class for OrderActionRequest\n");
+	  jclass cls = env->GetObjectClass(orderActionRequest);
 
+	  printf("getting method ID's 1 -5\n");
+	  jmethodID m_actionFlagId = env->GetMethodID(cls, "getActionFlag", "()Ljava/lang/String;");
+	  jmethodID m_brokerIDId = env->GetMethodID(cls, "getBrokerID", "()Ljava/lang/String;");
+	  jmethodID m_exchangeIDId = env->GetMethodID(cls, "getExchangeID", "()Ljava/lang/String;");
+	  jmethodID m_frontIDId = env->GetMethodID(cls, "getFrontID", "()I");
+	  jmethodID m_instrumentIDId = env->GetMethodID(cls, "getInstrumentID", "()Ljava/lang/String;");
+
+	  printf("getting method ID's 6 - 10\n");
+	  jmethodID m_investorId = env->GetMethodID(cls, "getInvestorID", "()Ljava/lang/String;");
+	  jmethodID m_limitPriceId = env->GetMethodID(cls, "getLimitPrice", "()D");
+	  jmethodID m_orderActionRefId = env->GetMethodID(cls, "getOrderActionRef", "()I");
+	  jmethodID m_orderRefId = env->GetMethodID(cls, "getOrderRef", "()Ljava/lang/String;");
+	  jmethodID m_orderSysIDId = env->GetMethodID(cls, "getOrderSysID", "()Ljava/lang/String;");
+
+	  printf("getting method ID's 11 - 14\n");
+	  jmethodID m_requestId = env->GetMethodID(cls, "getRequestID", "()I");
+	  jmethodID m_sessionIDId = env->GetMethodID(cls, "getSessionID", "()I");
+	  jmethodID m_userIDId = env->GetMethodID(cls, "getUserID", "()Ljava/lang/String;");
+	  jmethodID m_volumeChangeId = env->GetMethodID(cls, "getVolumeChange", "()I");
+
+	  printf("creating jstrings 1 - 5\n");
+	  printf("     1\n");
+	  jstring j_actionFlag = (jstring)env->CallObjectMethod(orderActionRequest, m_actionFlagId, 0);
+	  const char *c_actionFlag = env->GetStringUTFChars(j_actionFlag, false);
+	  printf("     2\n");
+	  jstring j_brokerId = (jstring)env->CallObjectMethod(orderActionRequest, m_brokerIDId, 0);
+	  const char *c_brokerId = env->GetStringUTFChars(j_brokerId, false);
+	  printf("     3\n");
+	  jstring j_exchangeID = (jstring)env->CallObjectMethod(orderActionRequest, m_exchangeIDId, 0);
+	  const char *c_exchangeID = env->GetStringUTFChars(j_exchangeID, false);
+	  printf("     4\n");
+	  jstring j_instrumentID = (jstring)env->CallObjectMethod(orderActionRequest, m_instrumentIDId, 0);
+	  const char *c_instrumentID = env->GetStringUTFChars(j_instrumentID, false);
+	  
+	  jstring j_investorID = (jstring)env->CallObjectMethod(orderActionRequest, m_investorId, 0);
+	  const char *c_investorID = env->GetStringUTFChars(j_investorID, false);
+	  printf("     5\n");
+	  printf("creating jstrings 6 - 9\n");
+	  jstring j_orderRef = (jstring)env->CallObjectMethod(orderActionRequest, m_orderRefId, 0);
+	  const char *c_orderRef = env->GetStringUTFChars(j_orderRef, false);
+
+	  jstring j_orderSysID = (jstring)env->CallObjectMethod(orderActionRequest, m_orderSysIDId, 0);
+	  const char *c_orderSysID = env->GetStringUTFChars(j_orderSysID, false);
+
+	  jstring j_userID = (jstring)env->CallObjectMethod(orderActionRequest, m_userIDId, 0);
+	  const char *c_userID = env->GetStringUTFChars(j_userID, false);
+
+	  printf("invoking getters 1 - 5\n");
+	  orderActionField.ActionFlag = c_actionFlag[0];
+	  strcpy_s(orderActionField.BrokerID, c_brokerId);
+	  strcpy_s(orderActionField.ExchangeID, c_exchangeID);
+	  orderActionField.FrontID = env->CallIntMethod(orderActionRequest, m_frontIDId);
+	  strcpy_s(orderActionField.InstrumentID, c_instrumentID);
+
+	  printf("invoking getters 6 - 10\n)");
+	  strcpy_s(orderActionField.InvestorID, c_investorID);
+	  orderActionField.LimitPrice = env->CallDoubleMethod(orderActionRequest, m_limitPriceId);
+	  orderActionField.OrderActionRef = env->CallIntMethod(orderActionRequest, m_orderActionRefId);
+	  strcpy_s(orderActionField.OrderRef, c_orderRef);
+	  strcpy_s(orderActionField.OrderSysID, c_orderSysID);
+
+	  printf("invoking getters 11 - 14\n");
+	  orderActionField.RequestID = env->CallIntMethod(orderActionRequest, m_requestId);
+	  orderActionField.SessionID = env->CallIntMethod(orderActionRequest, m_sessionIDId);
+	  strcpy_s(orderActionField.UserID, c_userID);
+	  orderActionField.VolumeChange = env -> CallIntMethod(orderActionRequest, m_volumeChangeId);
+
+	  printf("sending action request\n");
+	  traderInstance ->ReqOrderAction(&orderActionField, orderActionField.RequestID);
+
+	  env->DeleteLocalRef(j_actionFlag);
+	  env->ReleaseStringUTFChars(j_actionFlag, c_actionFlag);
+	  env->DeleteLocalRef(j_brokerId);
+	  env->ReleaseStringUTFChars(j_brokerId, c_brokerId);
+	  env->DeleteLocalRef(j_exchangeID);
+	  env->ReleaseStringUTFChars(j_exchangeID, c_exchangeID);
+	  env->DeleteLocalRef(j_instrumentID);
+	  env->ReleaseStringUTFChars(j_instrumentID, c_instrumentID);
+	  env->DeleteLocalRef(j_investorID);
+	  env->ReleaseStringUTFChars(j_investorID, c_investorID);
+	  env->DeleteLocalRef(j_orderRef);
+	  env->ReleaseStringUTFChars(j_orderRef, c_orderRef);
+	  env->DeleteLocalRef(j_orderSysID);
+	  env->ReleaseStringUTFChars(j_orderSysID, c_orderSysID);
+	  env->DeleteLocalRef(j_userID);
+	  env->ReleaseStringUTFChars(j_userID, c_userID);
 }
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendSettlementReqest

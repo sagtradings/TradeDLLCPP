@@ -10,9 +10,108 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			printf("an error happened");
 		}
 
+		virtual void OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+			printf("OnRspOrderAction\n");
+			JNIEnv * g_env;
+			jint success = cachedJvm -> GetEnv((void**)&g_env, JNI_VERSION_1_6);
+			if(success != JNI_OK){
+			//	printf("attempting to resync jvm to thread\n");
+				jint attachSuccess = cachedJvm ->AttachCurrentThread((void**)&g_env, NULL);
+				if(attachSuccess == 0){
+					//printf("resync successful!\n");
+				}
+				else{
+					//printf("resync unsuccessful\n");
+					return;
+				}
+			}
+			list<jobject>::iterator it = observers.begin();			
+			while (it != observers.end()) {
+				
+				printf("getting subscribed object and onOrderActionResponse method ID\n");
+				jobject &obj = *it;
+				jclass cls = g_env->GetObjectClass(obj);
+				jmethodID mid = g_env->GetMethodID(cls, "onOrderActionResponse", "(Lbo/OrderActionRequest;)V");
+
+				printf("Creating Parameter Object OrderActionRequeste\n");
+				jclass parameter = g_env->FindClass("bo/OrderActionRequest");
+			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
+				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
+
+				printf("getting ID's 1 - 5\n");
+				jmethodID m_actionFlagId = g_env->GetMethodID(parameter, "setActionFlag", "(Ljava/lang/String;)V");
+				jmethodID m_brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
+				jmethodID m_exchangeIDId = g_env->GetMethodID(parameter, "setExchangeID", "(Ljava/lang/String;)V");
+				jmethodID m_frontId = g_env->GetMethodID(parameter, "setFrontID", "(I)V");
+				jmethodID m_instrumentIDId = g_env->GetMethodID(parameter, "setInstrumentID", "(Ljava/lang/String;)V");
+
+				printf("getting ID's 6 - 10\n");
+				jmethodID m_investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
+				jmethodID m_limitPriceId = g_env->GetMethodID(parameter, "setLimitPrice", "(D)V");
+				jmethodID m_orderActionRefId = g_env->GetMethodID(parameter, "setOrderActionRef", "(I)V");
+				jmethodID m_orderRefId = g_env->GetMethodID(parameter, "setOrderRef", "(Ljava/lang/String;)V");
+				jmethodID m_orderSysIDId = g_env->GetMethodID(parameter, "setOrderSysID", "(Ljava/lang/String;)V");
+
+				printf("getting method ID's 11 - 14\n");
+				jmethodID m_requestIDId = g_env->GetMethodID(parameter, "setRequestID", "(I)V");
+				jmethodID m_sessionIDId = g_env->GetMethodID(parameter, "setSessionID", "(I)V");
+				jmethodID m_userIDId = g_env->GetMethodID(parameter, "setUserID", "(Ljava/lang/String;)V");
+				jmethodID m_volumeChange = g_env->GetMethodID(parameter, "setVolumeChange", "(I)V");
+
+				printf("invoking setters 1 - 5\n");
+				
+				char *actionFlag = new char[2]();
+				actionFlag[0] = pInputOrderAction->ActionFlag;
+				actionFlag[1] = '\0'; 
+				jstring j_actionFlag = g_env->NewStringUTF(actionFlag);
+				delete(actionFlag);
+				g_env->CallVoidMethod(paramObject, m_actionFlagId, j_actionFlag);
+
+				jstring j_brokerID = g_env->NewStringUTF(pInputOrderAction->BrokerID);
+				g_env->CallVoidMethod(paramObject, m_brokerIDId, j_brokerID);
+
+				jstring j_exchangeID = g_env->NewStringUTF(pInputOrderAction->ExchangeID);
+				g_env->CallVoidMethod(paramObject, m_exchangeIDId, j_exchangeID);
+
+				g_env->CallVoidMethod(paramObject, m_frontId, pInputOrderAction ->FrontID);
+
+				jstring j_instrumentID = g_env->NewStringUTF(pInputOrderAction->InstrumentID);
+				g_env->CallVoidMethod(paramObject, m_instrumentIDId, j_instrumentID);
+				
+				printf("invking setters 6 - 10\n");
+				jstring j_investorID = g_env->NewStringUTF(pInputOrderAction->InvestorID);
+				g_env->CallVoidMethod(paramObject, m_investorIDId, j_investorID);
+				g_env->CallVoidMethod(paramObject, m_limitPriceId, pInputOrderAction->LimitPrice);
+				g_env->CallVoidMethod(paramObject, m_orderActionRefId, pInputOrderAction ->OrderActionRef);
+				jstring j_orderRef = g_env->NewStringUTF(pInputOrderAction->OrderRef);
+				g_env->CallVoidMethod(paramObject, m_orderRefId, j_orderRef);
+				jstring j_orderSysID = g_env->NewStringUTF(pInputOrderAction->OrderSysID);
+				g_env->CallVoidMethod(paramObject, m_orderSysIDId, j_orderSysID);
+
+				printf("invoking setters 11 - 14\n");
+				g_env->CallVoidMethod(paramObject, m_requestIDId, pInputOrderAction->RequestID);
+				g_env->CallVoidMethod(paramObject, m_sessionIDId, pInputOrderAction->SessionID);
+				jstring j_userID = g_env->NewStringUTF(pInputOrderAction->UserID);
+				g_env->CallVoidMethod(paramObject, m_userIDId, j_userID);
+				g_env->CallVoidMethod(paramObject, m_volumeChange, pInputOrderAction->VolumeChange);
+
+				if (mid == 0) {
+					//printf("mid was 0!!!\n");mz
+					return;
+				}
+				printf("invoking callback");
+				g_env->CallVoidMethod(obj, mid, paramObject);
+				it++;
+
+			}
+		}
+
+		virtual void OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo) {
+			printf("OnErrRtnOrderAction\n");
+		}
+
 		virtual void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast){
 			printf("Settlement confirmed");	
-			printf("OnRtntrade\n");
 
 			JNIEnv * g_env;
 			jint success = cachedJvm -> GetEnv((void**)&g_env, JNI_VERSION_1_6);
@@ -204,8 +303,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, clientIDId, j_clientId);
 
 				printf("invoking setters 6 - 10\n");
-				
-				jstring j_direction = g_env->NewStringUTF(&pTrade->Direction);
+				char* cp_direction = new char[2]();
+				cp_direction[0] = pTrade->Direction;
+				cp_direction[1] = '\0';				
+				jstring j_direction = g_env->NewStringUTF(cp_direction);
+				delete(cp_direction);
 				g_env->CallVoidMethod(paramObject, directionId, j_direction);
 				
 				jstring j_exchangeID = g_env->NewStringUTF(pTrade->ExchangeID);
@@ -214,7 +316,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_exchangeInstID = g_env->NewStringUTF(pTrade->ExchangeInstID);
 				g_env->CallVoidMethod(paramObject, exchangeInstIDId, j_exchangeInstID);
 
+				char* cp_hedgeFlag = new char[2]();
+				cp_hedgeFlag[0] = pTrade->HedgeFlag;
+				cp_hedgeFlag[1] = '\0';	
 				jstring j_HedgeFlag = g_env->NewStringUTF(&pTrade->HedgeFlag);
+				delete(cp_hedgeFlag);
 				g_env->CallVoidMethod(paramObject, hedgeFlagId, j_HedgeFlag);
 
 				jstring j_InstrumentID = g_env->NewStringUTF(pTrade->InstrumentID);
@@ -224,8 +330,12 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_InvestorID = g_env->NewStringUTF(pTrade->InvestorID);
 				g_env->CallVoidMethod(paramObject, investorIDId, j_InvestorID);
 				
-				jstring j_OffsetFlag = g_env->NewStringUTF(&pTrade->OffsetFlag);
+				char* cp_offsetFlag = new char[2]();
+				cp_offsetFlag[0] = pTrade->OffsetFlag;
+				cp_offsetFlag[1] = '\0';	
+				jstring j_OffsetFlag = g_env->NewStringUTF(cp_offsetFlag);
 				g_env->CallVoidMethod(paramObject, offsetFlagId, j_OffsetFlag);
+				delete(cp_offsetFlag);
 
 				jstring j_OrderLocalID = g_env->NewStringUTF(pTrade->OrderLocalID);
 				g_env->CallVoidMethod(paramObject, orderLocalIDId, j_OrderLocalID);
@@ -241,7 +351,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, participantIDId, j_ParticipantID);
 				g_env->CallVoidMethod(paramObject, priceId, pTrade->Price);
 
-				jstring j_PriceSourceId = g_env->NewStringUTF(&pTrade->PriceSource);
+				char* cp_priceSource = new char[2]();
+				cp_priceSource[0] = pTrade->PriceSource;
+				cp_priceSource[1] = '\0';	
+				jstring j_PriceSourceId = g_env->NewStringUTF(cp_priceSource);
+				delete(cp_priceSource);
 				g_env->CallVoidMethod(paramObject, priceSourceId, j_PriceSourceId);
 				g_env->CallVoidMethod(paramObject, sequenceNoId, pTrade->SequenceNo);
 				g_env->CallVoidMethod(paramObject, settlementIDId, pTrade->SettlementID);
@@ -256,20 +370,31 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_TraderID = g_env->NewStringUTF(pTrade->TraderID);
 				g_env->CallVoidMethod(paramObject, traderIDId, j_TraderID);
 
-				jstring j_TradeSourceID = g_env->NewStringUTF(&pTrade->TradeSource);
+				char* cp_tradeSource = new char[2]();
+				cp_tradeSource[0] = pTrade->TradeSource;
+				cp_tradeSource[1] = '\0';	
+				jstring j_TradeSourceID = g_env->NewStringUTF(cp_tradeSource);
+				delete(cp_tradeSource);
 				g_env->CallVoidMethod(paramObject, tradeSourceId, j_TradeSourceID);
 
 				jstring j_TradeTimeID = g_env->NewStringUTF(pTrade->TradeTime);
 				g_env->CallVoidMethod(paramObject, tradeTimeId, j_TradeTimeID);
 
 				printf("invoking setters 25 - 30\n");
+				char* cp_tradeType = new char[2]();
+				cp_tradeType[0] = pTrade->TradeType;
+				cp_tradeType[1] = '\0';	
 				jstring j_TraderTypeID = g_env->NewStringUTF(&pTrade->TradeType);
+				delete(cp_tradeType);
 				g_env->CallVoidMethod(paramObject, tradeTypeId, j_TraderTypeID);
 
 				jstring j_TradingDay = g_env->NewStringUTF(pTrade->TradingDay);
 				g_env->CallVoidMethod(paramObject, tradingDayId, j_TradingDay);
-
+				char* cp_tradeRole = new char[2]();
+				cp_tradeRole[0] = pTrade->TradingRole;
+				cp_tradeRole[1] = '\0';	
 				jstring j_tradingRoleID = g_env->NewStringUTF(&pTrade->TradingRole); 
+				delete(cp_tradeRole);
 				g_env->CallVoidMethod(paramObject, tradingRoldId, j_tradingRoleID);
 
 				jstring j_UserID = g_env->NewStringUTF(pTrade->UserID);
@@ -433,7 +558,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, combHedgeFlagId, j_combHedgeFlag);
 				jstring j_combOffsetFlag = g_env->NewStringUTF(pOrder->CombOffsetFlag);
 				g_env->CallVoidMethod(paramObject, combOffsetFlagId, j_combOffsetFlag);
-				jstring j_contingentCondition = g_env->NewStringUTF(&pOrder->ContingentCondition);
+				char* cp_contingentCondition = new char[2]();
+				cp_contingentCondition[0] = pOrder->ContingentCondition;
+				cp_contingentCondition[1] = '\0';
+				jstring j_contingentCondition = g_env->NewStringUTF(cp_contingentCondition);
+				delete(cp_contingentCondition);
 				g_env->CallVoidMethod(paramObject, contingentConditionId, j_contingentCondition);
 				jstring j_direction = g_env->NewStringUTF(&pOrder->Direction);
 				g_env->CallVoidMethod(paramObject, directionId, j_direction);
@@ -443,7 +572,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				printf("invoking setters 16 - 20\n");
 				jstring j_exchangeInstId = g_env->NewStringUTF(pOrder->ExchangeInstID);
 				g_env->CallVoidMethod(paramObject, exchangeInstIDId, j_exchangeInstId);
-				jstring j_forceCloseReason = g_env->NewStringUTF(&pOrder->ForceCloseReason);
+				char* cp_forceCloseReason = new char[2]();
+				cp_forceCloseReason[0] = pOrder->ContingentCondition;
+				cp_forceCloseReason[1] = '\0';
+				jstring j_forceCloseReason = g_env->NewStringUTF(cp_forceCloseReason);
+				delete(cp_forceCloseReason);
 				g_env->CallVoidMethod(paramObject, forceCloseReasonId, j_forceCloseReason);
 				g_env->CallVoidMethod(paramObject, frontIDId, pOrder->FrontID);
 				jstring j_gtdDate = g_env->NewStringUTF(pOrder->GTDDate);
@@ -476,7 +609,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, orderSourceId, j_orderSource);
 				jstring j_orderStatus = g_env->NewStringUTF(&pOrder->OrderStatus);
 				g_env->CallVoidMethod(paramObject, orderStatusId, j_orderStatus);
-				jstring j_orderSubmitStatus = g_env->NewStringUTF(&pOrder->OrderSubmitStatus);
+				char* cp_orderSubmitStatus = new char[2]();
+				cp_orderSubmitStatus[0] = pOrder->OrderSubmitStatus;
+				cp_orderSubmitStatus[1] = '\0';
+				jstring j_orderSubmitStatus = g_env->NewStringUTF(cp_orderSubmitStatus);
+				delete(cp_orderSubmitStatus);
 				g_env->CallVoidMethod(paramObject, orderSubmitStatusId, j_orderSubmitStatus);
 				jstring j_orderSysID = g_env->NewStringUTF(pOrder->OrderSysID);
 				g_env->CallVoidMethod(paramObject, orderSysIDId, j_orderSysID);
@@ -517,7 +654,11 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, userIDId, j_userID);
 				jstring j_userProductInfo = g_env->NewStringUTF(pOrder->UserProductInfo);
 				g_env->CallVoidMethod(paramObject, userProductInfoId, j_userProductInfo);
-				jstring j_volumeCondition = g_env->NewStringUTF(&pOrder->VolumeCondition);
+				char* cp_volumeCondition = new char[2]();
+				cp_volumeCondition[0] = pOrder->VolumeCondition;
+				cp_volumeCondition[1] = '\0';
+				jstring j_volumeCondition = g_env->NewStringUTF(cp_volumeCondition);
+				delete(cp_volumeCondition);
 				g_env->CallVoidMethod(paramObject, volumeConditionId, j_volumeCondition);
 				g_env->CallVoidMethod(paramObject, volumeTotalId, pOrder->VolumeTotal);
 				g_env->CallVoidMethod(paramObject, volumeTotalOrignalId, pOrder->VolumeTotalOriginal);
@@ -588,9 +729,7 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			}
 		}
 
-		virtual void OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo){
-			printf("OnErrRtnOrderAction\n");
-		}
+
 
 	private:
 		// a pointer of CThostFtdcMduserApi instance

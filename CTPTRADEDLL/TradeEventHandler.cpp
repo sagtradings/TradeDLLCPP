@@ -11,7 +11,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 		}
 
 		virtual void OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-			printf("OnRspOrderAction\n");
 			JNIEnv * g_env;
 			jint success = cachedJvm -> GetEnv((void**)&g_env, JNI_VERSION_1_6);
 			if(success != JNI_OK){
@@ -28,37 +27,31 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				
-				printf("getting subscribed object and onOrderActionResponse method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
 				jmethodID mid = g_env->GetMethodID(cls, "onOrderActionResponse", "(Lbo/OrderActionRequest;)V");
 
-				printf("Creating Parameter Object OrderActionRequeste\n");
 				jclass parameter = g_env->FindClass("bo/OrderActionRequest");
 			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
 
-				printf("getting ID's 1 - 5\n");
 				jmethodID m_actionFlagId = g_env->GetMethodID(parameter, "setActionFlag", "(Ljava/lang/String;)V");
 				jmethodID m_brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
 				jmethodID m_exchangeIDId = g_env->GetMethodID(parameter, "setExchangeID", "(Ljava/lang/String;)V");
 				jmethodID m_frontId = g_env->GetMethodID(parameter, "setFrontID", "(I)V");
 				jmethodID m_instrumentIDId = g_env->GetMethodID(parameter, "setInstrumentID", "(Ljava/lang/String;)V");
 
-				printf("getting ID's 6 - 10\n");
 				jmethodID m_investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
 				jmethodID m_limitPriceId = g_env->GetMethodID(parameter, "setLimitPrice", "(D)V");
 				jmethodID m_orderActionRefId = g_env->GetMethodID(parameter, "setOrderActionRef", "(I)V");
 				jmethodID m_orderRefId = g_env->GetMethodID(parameter, "setOrderRef", "(Ljava/lang/String;)V");
 				jmethodID m_orderSysIDId = g_env->GetMethodID(parameter, "setOrderSysID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 11 - 14\n");
 				jmethodID m_requestIDId = g_env->GetMethodID(parameter, "setRequestID", "(I)V");
 				jmethodID m_sessionIDId = g_env->GetMethodID(parameter, "setSessionID", "(I)V");
 				jmethodID m_userIDId = g_env->GetMethodID(parameter, "setUserID", "(Ljava/lang/String;)V");
 				jmethodID m_volumeChange = g_env->GetMethodID(parameter, "setVolumeChange", "(I)V");
 
-				printf("invoking setters 1 - 5\n");
 				
 				char *actionFlag = new char[2]();
 				actionFlag[0] = pInputOrderAction->ActionFlag;
@@ -78,7 +71,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_instrumentID = g_env->NewStringUTF(pInputOrderAction->InstrumentID);
 				g_env->CallVoidMethod(paramObject, m_instrumentIDId, j_instrumentID);
 				
-				printf("invking setters 6 - 10\n");
 				jstring j_investorID = g_env->NewStringUTF(pInputOrderAction->InvestorID);
 				g_env->CallVoidMethod(paramObject, m_investorIDId, j_investorID);
 				g_env->CallVoidMethod(paramObject, m_limitPriceId, pInputOrderAction->LimitPrice);
@@ -88,7 +80,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_orderSysID = g_env->NewStringUTF(pInputOrderAction->OrderSysID);
 				g_env->CallVoidMethod(paramObject, m_orderSysIDId, j_orderSysID);
 
-				printf("invoking setters 11 - 14\n");
 				g_env->CallVoidMethod(paramObject, m_requestIDId, pInputOrderAction->RequestID);
 				g_env->CallVoidMethod(paramObject, m_sessionIDId, pInputOrderAction->SessionID);
 				jstring j_userID = g_env->NewStringUTF(pInputOrderAction->UserID);
@@ -99,7 +90,7 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 					//printf("mid was 0!!!\n");mz
 					return;
 				}
-				printf("invoking callback");
+
 				g_env->CallVoidMethod(obj, mid, paramObject);
 				it++;
 
@@ -111,8 +102,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 		}
 
 		virtual void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast){
-			printf("Settlement confirmed");	
-
 			JNIEnv * g_env;
 			jint success = cachedJvm -> GetEnv((void**)&g_env, JNI_VERSION_1_6);
 			if(success != JNI_OK){
@@ -129,23 +118,19 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				
-				printf("getting subscribed object and onRtnTrade method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
 				jmethodID mid = g_env->GetMethodID(cls, "onSettlementResponse", "(Lbo/SettlementResponse;)V");
 
-				printf("Creating Parameter Object SettlementResponse\n");
 				jclass parameter = g_env->FindClass("bo/SettlementResponse");
 			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
 
-				printf("getting ID's 1 - 5\n");
 				jmethodID brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
 				jmethodID confirmDateId = g_env->GetMethodID(parameter, "setConfirmDate", "(Ljava/lang/String;)V");
 				jmethodID confirmTimeId = g_env->GetMethodID(parameter, "setConfirmDate", "(Ljava/lang/String;)V");
 				jmethodID investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
 
-				printf("invoking setters 1 - 5\n");
 				jstring j_brokerId = g_env->NewStringUTF(pSettlementInfoConfirm->BrokerID);
 				g_env->CallVoidMethod(paramObject, brokerIDId, j_brokerId);
 				jstring j_confirmDate = g_env->NewStringUTF(pSettlementInfoConfirm->ConfirmDate);
@@ -189,18 +174,13 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			}
 			int maxOrderRev = atoi(pRspUserLogin->MaxOrderRef);
 
-			printf("Creating Parameter Object LoginResponse\n");
 			jclass parameter = g_env->FindClass("bo/LoginResponse");
 			jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 			jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
-
-			printf("getting ID's 1 - 5\n");
 			jmethodID maxOrderId = g_env->GetMethodID(parameter, "setMaxOrder", "(I)V");
 
-			printf("invoking setters 1 - 5\n");
 			g_env->CallVoidMethod(paramObject, maxOrderId, maxOrderRev + 1);
 
-			printf("notifyinglisteners\n");
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				jobject &obj = *it;
@@ -234,59 +214,50 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				
-				printf("getting subscribed object and onRtnTrade method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
 				jmethodID mid = g_env->GetMethodID(cls, "onRtnTradingData", "(Lbo/TradeDataResponse;)V");
 
-				printf("Creating Parameter Object TradeDataResponse\n");
 				jclass parameter = g_env->FindClass("bo/TradeDataResponse");
 			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
 
-				printf("getting ID's 1 - 5\n");
 				jmethodID brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
 				jmethodID brokerSequenceIDId = g_env->GetMethodID(parameter, "setBrokerOrderSeq", "(I)V");
 				jmethodID businessUnitId = g_env->GetMethodID(parameter, "setBusinessUnit", "(Ljava/lang/String;)V");
 				jmethodID clearingPartIDId = g_env->GetMethodID(parameter, "setClearingPartID", "(Ljava/lang/String;)V");
 				jmethodID clientIDId = g_env->GetMethodID(parameter, "setClientID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 6 - 10\n");
 				jmethodID directionId = g_env->GetMethodID(parameter, "setDirection", "(Ljava/lang/String;)V");
 				jmethodID exchangeIDId = g_env->GetMethodID(parameter, "setExchangeID", "(Ljava/lang/String;)V");
 				jmethodID exchangeInstIDId = g_env->GetMethodID(parameter, "setExchangeInstID", "(Ljava/lang/String;)V");
 				jmethodID hedgeFlagId = g_env->GetMethodID(parameter, "setHedgeFlag", "(Ljava/lang/String;)V");
 				jmethodID instrumentIDId = g_env->GetMethodID(parameter, "setInstrumentID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 11 - 15\n");
 				jmethodID investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
 				jmethodID offsetFlagId = g_env->GetMethodID(parameter, "setOffsetFlag", "(Ljava/lang/String;)V");
 				jmethodID orderLocalIDId = g_env->GetMethodID(parameter, "setOrderLocalID", "(Ljava/lang/String;)V");
 				jmethodID orderRefId = g_env->GetMethodID(parameter, "setOrderRef", "(Ljava/lang/String;)V");
 				jmethodID orderSysIDId = g_env->GetMethodID(parameter, "setOrderSysID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 16 - 20\n");
 				jmethodID participantIDId = g_env->GetMethodID(parameter, "setParticipantID", "(Ljava/lang/String;)V");
 				jmethodID priceId = g_env->GetMethodID(parameter, "setPrice", "(D)V");
 				jmethodID priceSourceId = g_env->GetMethodID(parameter, "setPriceSource", "(Ljava/lang/String;)V");
 				jmethodID sequenceNoId = g_env->GetMethodID(parameter, "setSequenceNo", "(I)V");
 				jmethodID settlementIDId = g_env->GetMethodID(parameter, "setSettlementID", "(I)V");
 
-				printf("getting method ID's 21 - 25\n");
 				jmethodID tradeDateId = g_env->GetMethodID(parameter, "setTradeDate", "(Ljava/lang/String;)V");
 				jmethodID tradeIDId = g_env->GetMethodID(parameter, "setTradeID", "(Ljava/lang/String;)V");
 				jmethodID traderIDId = g_env->GetMethodID(parameter, "setTraderID", "(Ljava/lang/String;)V");
 				jmethodID tradeSourceId = g_env->GetMethodID(parameter, "setTradeSource", "(Ljava/lang/String;)V");
 				jmethodID tradeTimeId = g_env->GetMethodID(parameter, "setTradeTime", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 26 - 30\n");
 				jmethodID tradeTypeId = g_env->GetMethodID(parameter, "setTradeType", "(Ljava/lang/String;)V");
 				jmethodID tradingDayId = g_env->GetMethodID(parameter, "setTradingDay", "(Ljava/lang/String;)V");
 				jmethodID tradingRoldId = g_env->GetMethodID(parameter, "setTradingRole", "(Ljava/lang/String;)V");
 				jmethodID userIDId = g_env->GetMethodID(parameter, "setUserID", "(Ljava/lang/String;)V");
 				jmethodID volumeId = g_env->GetMethodID(parameter, "setVolume", "(I)V");
 
-				printf("invoking setters 1 - 5\n");
 				jstring j_brokerId = g_env->NewStringUTF(pTrade->BrokerID);
 				g_env->CallVoidMethod(paramObject, brokerIDId, j_brokerId);
 				
@@ -302,7 +273,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_clientId = g_env->NewStringUTF(pTrade->ClientID);
 				g_env->CallVoidMethod(paramObject, clientIDId, j_clientId);
 
-				printf("invoking setters 6 - 10\n");
 				char* cp_direction = new char[2]();
 				cp_direction[0] = pTrade->Direction;
 				cp_direction[1] = '\0';				
@@ -326,7 +296,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_InstrumentID = g_env->NewStringUTF(pTrade->InstrumentID);
 				g_env->CallVoidMethod(paramObject, instrumentIDId, j_InstrumentID);
 
-				printf("invoking setters 11 - 15\n");
 				jstring j_InvestorID = g_env->NewStringUTF(pTrade->InvestorID);
 				g_env->CallVoidMethod(paramObject, investorIDId, j_InvestorID);
 				
@@ -346,7 +315,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_OrderSysID = g_env->NewStringUTF(pTrade->OrderSysID);
 				g_env->CallVoidMethod(paramObject, orderSysIDId, j_OrderSysID);
 
-				printf("invoking setters 16 - 20\n");
 				jstring j_ParticipantID = g_env->NewStringUTF(pTrade->ParticipantID);
 				g_env->CallVoidMethod(paramObject, participantIDId, j_ParticipantID);
 				g_env->CallVoidMethod(paramObject, priceId, pTrade->Price);
@@ -360,7 +328,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, sequenceNoId, pTrade->SequenceNo);
 				g_env->CallVoidMethod(paramObject, settlementIDId, pTrade->SettlementID);
 
-				printf("invoking setters 21 - 25\n");
 				jstring j_TradeDateID = g_env->NewStringUTF(pTrade->TradeDate);
 				g_env->CallVoidMethod(paramObject, tradeDateId, j_TradeDateID);
 
@@ -380,7 +347,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_TradeTimeID = g_env->NewStringUTF(pTrade->TradeTime);
 				g_env->CallVoidMethod(paramObject, tradeTimeId, j_TradeTimeID);
 
-				printf("invoking setters 25 - 30\n");
 				char* cp_tradeType = new char[2]();
 				cp_tradeType[0] = pTrade->TradeType;
 				cp_tradeType[1] = '\0';	
@@ -437,101 +403,83 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				
-				printf("getting subscribed object and onRtnOrder method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
 				jmethodID mid = g_env->GetMethodID(cls, "onRtnOrder", "(Lbo/OrderInsertResponse;)V");
 
-				printf("Creating Parameter Object OrderInsertResponse\n");
 				jclass parameter = g_env->FindClass("bo/OrderInsertResponse");
 			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
 
-				printf("getting ID's 1 - 5\n");
 				jmethodID activeTimeId = g_env->GetMethodID(parameter, "setActiveTime", "(Ljava/lang/String;)V");
 				jmethodID activeTraderIDId = g_env->GetMethodID(parameter, "setActiveTraderID", "(Ljava/lang/String;)V");
 				jmethodID activeUserIDId = g_env->GetMethodID(parameter, "setActiveUserID", "(Ljava/lang/String;)V");
 				jmethodID autoSuspendId = g_env->GetMethodID(parameter, "setAutoSuspend", "(I)V");
 				jmethodID brokerIDId = g_env->GetMethodID(parameter, "setBrokerID", "(Ljava/lang/String;)V");
 
-
-				printf("getting method ID's 6 - 10\n");
 				jmethodID brokerOrderSeqId = g_env->GetMethodID(parameter, "setBrokerOrderSeq", "(I)V");
 				jmethodID businessUnitId = g_env->GetMethodID(parameter, "setBusinessUnit", "(Ljava/lang/String;)V");
 				jmethodID cancelTimeId = g_env->GetMethodID(parameter, "setCancelTime", "(Ljava/lang/String;)V");
 				jmethodID clearingPartIDId = g_env->GetMethodID(parameter, "setClearingPartID", "(Ljava/lang/String;)V");
 				jmethodID clientIDId = g_env->GetMethodID(parameter, "setClientID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 11 - 15\n");
 				jmethodID combHedgeFlagId = g_env->GetMethodID(parameter, "setCombHedgeFlag", "(Ljava/lang/String;)V");
 				jmethodID combOffsetFlagId = g_env->GetMethodID(parameter, "setCombOffsetFlag", "(Ljava/lang/String;)V");
 				jmethodID contingentConditionId = g_env->GetMethodID(parameter, "setContingentCondition", "(Ljava/lang/String;)V");
 				jmethodID directionId = g_env->GetMethodID(parameter, "setDirection", "(Ljava/lang/String;)V");
 				jmethodID exchangeIDId = g_env->GetMethodID(parameter, "setExchangeID", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 16 - 20\n");
 				jmethodID exchangeInstIDId = g_env->GetMethodID(parameter, "setExchangeInstID", "(Ljava/lang/String;)V");
 				jmethodID forceCloseReasonId = g_env->GetMethodID(parameter, "setForceCloseReason", "(Ljava/lang/String;)V");
 				jmethodID frontIDId = g_env->GetMethodID(parameter, "setFrontID", "(I)V");
 				jmethodID gtdDateId = g_env->GetMethodID(parameter, "setGtdDate", "(Ljava/lang/String;)V");
 				jmethodID insertDateId = g_env->GetMethodID(parameter, "setInsertDate", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 21 - 25\n");
 				jmethodID insertTimeId = g_env->GetMethodID(parameter, "setInsertTime", "(Ljava/lang/String;)V");
 				jmethodID installIDId = g_env->GetMethodID(parameter, "setInstallID", "(I)V");
 				jmethodID instrumentIDId = g_env->GetMethodID(parameter, "setInstrumentID", "(Ljava/lang/String;)V");
 				jmethodID investorIDId = g_env->GetMethodID(parameter, "setInvestorID", "(Ljava/lang/String;)V");
 				jmethodID limitPriceId = g_env->GetMethodID(parameter, "setLimitPrice", "(D)V");
 
-				printf("getting method ID's 26 - 30\n");
 				jmethodID minVolumeId = g_env->GetMethodID(parameter, "setMinVolume", "(I)V");
 				jmethodID notifySequenceId = g_env->GetMethodID(parameter, "setNotifySequence", "(I)V");
 				jmethodID orderLocalIDId = g_env->GetMethodID(parameter, "setOrderLocalID", "(Ljava/lang/String;)V");
 				jmethodID orderPriceTypeId = g_env->GetMethodID(parameter, "setOrderPriceType", "(Ljava/lang/String;)V");
 				jmethodID orderRefId = g_env->GetMethodID(parameter, "setOrderRef", "(Ljava/lang/String;)V");
 
-				printf("getting method ID's 31 - 35\n");
 				jmethodID orderSourceId = g_env->GetMethodID(parameter, "setOrderSource", "(Ljava/lang/String;)V");
 				jmethodID orderStatusId = g_env->GetMethodID(parameter, "setOrderStatus", "(Ljava/lang/String;)V");
 				jmethodID orderSubmitStatusId = g_env->GetMethodID(parameter, "setOrderSubmitStatus", "(Ljava/lang/String;)V");
 				jmethodID orderSysIDId = g_env->GetMethodID(parameter, "setOrderSysID", "(Ljava/lang/String;)V");
 				jmethodID orderTypeId = g_env->GetMethodID(parameter, "setOrderType", "(Ljava/lang/String;)V");
 				
-				printf("getting method ID's 36 - 40\n");
 				jmethodID participantIDId = g_env->GetMethodID(parameter, "setParticipantID", "(Ljava/lang/String;)V");
 				jmethodID relativeOrderSysIDId = g_env->GetMethodID(parameter, "setRelativeOrderSysID", "(Ljava/lang/String;)V");
 				jmethodID requestIDId = g_env->GetMethodID(parameter, "setRequestID", "(I)V");
 				jmethodID sequenceNoId = g_env->GetMethodID(parameter, "setSequenceNo", "(I)V");
 				jmethodID sessionIDId = g_env->GetMethodID(parameter, "setSessionID", "(I)V");
 
-				printf("getting method ID's 41 - 45\n");
 				jmethodID settlementIDId = g_env->GetMethodID(parameter, "setSettlementID", "(I)V");
 				jmethodID statusMessageId = g_env->GetMethodID(parameter, "setStatusMsg", "(Ljava/lang/String;)V");
 				jmethodID stopPriceId = g_env->GetMethodID(parameter, "setStopPrice", "(D)V");
 				jmethodID suspendTimeId = g_env->GetMethodID(parameter, "setSuspendTime", "(Ljava/lang/String;)V");
 				jmethodID swapOrderId = g_env->GetMethodID(parameter, "setSwapOrder", "(I)V");
 
-				printf("getting method ID's 46 - 50\n");
 				jmethodID timeConditionId = g_env->GetMethodID(parameter, "setTimeCondition", "(Ljava/lang/String;)V");
 				jmethodID traderIDId = g_env->GetMethodID(parameter, "setTraderID", "(Ljava/lang/String;)V");
 				jmethodID tradingDayId = g_env->GetMethodID(parameter, "setTradingDay", "(Ljava/lang/String;)V");
 				jmethodID updateTimeId = g_env->GetMethodID(parameter, "setUpdateTime", "(Ljava/lang/String;)V");
 				jmethodID userForceCloseId = g_env->GetMethodID(parameter, "setUserForceClose", "(I)V");
 
-				printf("getting method ID's 51 - 55\n");
 				jmethodID userIDId = g_env->GetMethodID(parameter, "setUserID", "(Ljava/lang/String;)V");
 				jmethodID userProductInfoId = g_env->GetMethodID(parameter, "setUserProductInfo", "(Ljava/lang/String;)V");
 				jmethodID volumeConditionId = g_env->GetMethodID(parameter, "setVolumeCondition", "(Ljava/lang/String;)V");
 				jmethodID volumeTotalId = g_env->GetMethodID(parameter, "setVolumeTotal", "(I)V");
 				jmethodID volumeTotalOrignalId = g_env->GetMethodID(parameter, "setVolumeTotalOriginal", "(I)V");
 				
-				printf("getting method ID's 56 - 57\n");
 				jmethodID volumeTradedId = g_env->GetMethodID(parameter, "setVolumeTraded", "(I)V");
 				jmethodID zceTotalTradedVolumeId = g_env->GetMethodID(parameter, "setZceTotalTradedVolume", "(I)V");
 
-				
-				
-				printf("invoking setters 1 - 5\n");
 				jstring j_activeTime = g_env->NewStringUTF(pOrder->ActiveTime);
 				g_env->CallVoidMethod(paramObject, activeTimeId, j_activeTime);
 				jstring j_activeTraderID = g_env->NewStringUTF(pOrder->ActiveTraderID);
@@ -542,7 +490,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_brokerId = g_env->NewStringUTF(pOrder->BrokerID);
 				g_env->CallVoidMethod(paramObject, brokerIDId, j_brokerId);
 
-				printf("invoking setters 6 - 10\n");
 				g_env->CallVoidMethod(paramObject, brokerOrderSeqId, pOrder->BrokerOrderSeq);				
 				jstring j_businessUnit = g_env->NewStringUTF(pOrder->BusinessUnit);
 				g_env->CallVoidMethod(paramObject, businessUnitId, j_businessUnit);
@@ -553,7 +500,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_clientId = g_env->NewStringUTF(pOrder->ClientID);
 				g_env->CallVoidMethod(paramObject, clientIDId, j_clientId);
 
-				printf("invoking setters 11 - 15\n");
 				jstring j_combHedgeFlag = g_env->NewStringUTF(pOrder->CombHedgeFlag);
 				g_env->CallVoidMethod(paramObject, combHedgeFlagId, j_combHedgeFlag);
 				jstring j_combOffsetFlag = g_env->NewStringUTF(pOrder->CombOffsetFlag);
@@ -569,7 +515,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_exchangeId = g_env->NewStringUTF(pOrder->ExchangeID);
 				g_env->CallVoidMethod(paramObject, exchangeIDId, j_exchangeId);
 
-				printf("invoking setters 16 - 20\n");
 				jstring j_exchangeInstId = g_env->NewStringUTF(pOrder->ExchangeInstID);
 				g_env->CallVoidMethod(paramObject, exchangeInstIDId, j_exchangeInstId);
 				char* cp_forceCloseReason = new char[2]();
@@ -584,7 +529,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_insertDate = g_env->NewStringUTF(pOrder->InsertDate);
 				g_env->CallVoidMethod(paramObject, insertDateId, j_insertDate);
 
-				printf("invoking setters 21 - 25\n");
 				jstring j_insertTime = g_env->NewStringUTF(pOrder->InsertTime);
 				g_env->CallVoidMethod(paramObject, insertTimeId, j_insertTime);
 				g_env->CallVoidMethod(paramObject, installIDId, pOrder->InstallID);
@@ -594,7 +538,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, investorIDId, j_investorID);
 				g_env->CallVoidMethod(paramObject, limitPriceId, pOrder->LimitPrice);
 
-				printf("invoking setters 25 - 30\n");
 				g_env->CallVoidMethod(paramObject, minVolumeId, pOrder->MinVolume);
 				g_env->CallVoidMethod(paramObject, notifySequenceId, pOrder->NotifySequence);
 				jstring j_orderLocalID = g_env->NewStringUTF(pOrder->OrderLocalID);
@@ -604,7 +547,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_OrderRef = g_env->NewStringUTF(pOrder->OrderRef);
 				g_env->CallVoidMethod(paramObject, orderRefId, j_OrderRef);
 				
-				printf("invoking setters 31 - 35\n");
 				jstring j_orderSource = g_env->NewStringUTF(&pOrder->OrderSource);
 				g_env->CallVoidMethod(paramObject, orderSourceId, j_orderSource);
 				jstring j_orderStatus = g_env->NewStringUTF(&pOrder->OrderStatus);
@@ -620,7 +562,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				jstring j_orderType = g_env->NewStringUTF(&pOrder->OrderType);
 				g_env->CallVoidMethod(paramObject, orderTypeId, j_orderType);
 
-				printf("invoking setters 36 - 40\n");
 				jstring j_participantID = g_env->NewStringUTF(pOrder->ParticipantID);
 				g_env->CallVoidMethod(paramObject, participantIDId, j_participantID);
 				jstring j_relativeOrderSysID = g_env->NewStringUTF(pOrder->RelativeOrderSysID);
@@ -629,7 +570,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, sequenceNoId, pOrder->SequenceNo);
 				g_env->CallVoidMethod(paramObject, sessionIDId, pOrder->SessionID);
 
-				printf("invoking setters 41 - 45\n");
 				g_env->CallVoidMethod(paramObject, settlementIDId, pOrder->SettlementID);
 				jstring j_statusMsg = g_env->NewStringUTF(pOrder->StatusMsg);
 				g_env->CallVoidMethod(paramObject, statusMessageId, j_statusMsg);
@@ -638,7 +578,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, suspendTimeId, j_suspendTime);
 				g_env->CallVoidMethod(paramObject, swapOrderId, pOrder->IsSwapOrder);
 
-				printf("invoking setters 46 - 50\n");
 				jstring j_timeCondition = g_env->NewStringUTF(&pOrder->TimeCondition);
 				g_env->CallVoidMethod(paramObject, timeConditionId, j_timeCondition);
 				jstring j_traderID = g_env->NewStringUTF(pOrder->TraderID);
@@ -649,7 +588,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, updateTimeId, j_updateTime);
 				g_env->CallVoidMethod(paramObject, userForceCloseId, pOrder->UserForceClose);
 
-				printf("invoking setters 51 - 55\n");
 				jstring j_userID = g_env->NewStringUTF(pOrder->UserID);
 				g_env->CallVoidMethod(paramObject, userIDId, j_userID);
 				jstring j_userProductInfo = g_env->NewStringUTF(pOrder->UserProductInfo);
@@ -663,7 +601,6 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 				g_env->CallVoidMethod(paramObject, volumeTotalId, pOrder->VolumeTotal);
 				g_env->CallVoidMethod(paramObject, volumeTotalOrignalId, pOrder->VolumeTotalOriginal);
 
-				printf("invoking setters 56 - 57\n");
 				g_env->CallVoidMethod(paramObject, volumeTradedId, pOrder->VolumeTraded);
 				g_env->CallVoidMethod(paramObject, zceTotalTradedVolumeId, pOrder->ZCETotalTradedVolume);
 
@@ -697,23 +634,18 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 			list<jobject>::iterator it = observers.begin();			
 			while (it != observers.end()) {
 				
-				printf("getting subscribed object and onRspError method ID\n");
 				jobject &obj = *it;
 				jclass cls = g_env->GetObjectClass(obj);
 				jmethodID mid = g_env->GetMethodID(cls, "onRspError", "(Lbo/ErrorResult;)V");
 
-				printf("Creating Parameter Object ErrorResult\n");
 				jclass parameter = g_env->FindClass("bo/ErrorResult");
 			    jmethodID midConstructor = (g_env)->GetMethodID(parameter, "<init>", "()V");
 				jobject paramObject = (g_env)->NewObject(parameter, midConstructor);
 
-				printf("getting ID's 1 - 5\n");
 				jmethodID errorIDId = g_env->GetMethodID(parameter, "setErrorId", "(I)V");
 				jmethodID errorMessageId = g_env->GetMethodID(parameter, "setErrorMessage", "(Ljava/lang/String;)V");
 				
-				printf("invoking setters 1\n");
 				g_env->CallVoidMethod(paramObject, errorIDId, pRspInfo->ErrorID);
-				printf("invoking setter 2\n");
 				jstring j_errorMessage = g_env->NewStringUTF(pRspInfo->ErrorMsg);
 				g_env->CallVoidMethod(paramObject, errorMessageId, j_errorMessage);
 

@@ -153,7 +153,7 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendTradeReq
 			strcpy_s(orderField.InvestorID, env->GetStringUTFChars(investorId, false));
 			strcpy_s(orderField.BrokerID, env->GetStringUTFChars(brokerId, false));
 			strcpy_s(orderField.InstrumentID, c_instrumentId);
-			strcpy_s(orderField.OrderRef, "000000000001");
+			strcpy_s(orderField.OrderRef, c_orderRef);
 			
 			printf("invoking getters 1-5\n");
 			orderField.Direction = c_direction[0];
@@ -174,6 +174,7 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendTradeReq
 			orderField.IsAutoSuspend = env->CallIntMethod(tradeRequest, m_autoSuspendId);
 			orderField.VolumeTotalOriginal = env->CallIntMethod(tradeRequest, m_volumeTotalOriginal);
 			orderField.TimeCondition = c_timeCondition[0];
+			orderField.RequestID = env->CallIntMethod(tradeRequest,m_requestIDId);
 
 			printf("Direction: %c\n", orderField.Direction);
 			printf("OrderPriceType: %c\n", orderField.OrderPriceType);
@@ -190,7 +191,7 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendTradeReq
 			printf("TimeCondition: %c\n", orderField.TimeCondition);
 			printf("InstrumentID: %s\n", orderField.InstrumentID);
 
-			traderInstance->ReqOrderInsert(&orderField, 1);
+			traderInstance->ReqOrderInsert(&orderField, orderField.RequestID);
 			env->DeleteLocalRef(j_brokerId);
 			env->ReleaseStringUTFChars(j_brokerId, c_brokerID);
 			env->DeleteLocalRef(j_businessUnit);

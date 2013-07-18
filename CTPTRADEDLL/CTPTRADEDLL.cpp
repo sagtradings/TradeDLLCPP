@@ -13,22 +13,24 @@ int iNextOrderRef = 0;
 
 list<jobject> observers;
 
- CThostFtdcTraderApi *traderInstance = CThostFtdcTraderApi::CreateFtdcTraderApi();
- TraderEventHandler th(traderInstance);
+ CThostFtdcTraderApi *traderInstance = NULL; 
+ TraderEventHandler th;
 
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendLoginMessage
   (JNIEnv *env, jobject srcObject, jstring brokerId, jstring password, jstring investorId){
 
 		
-		
-		traderInstance->RegisterSpi(&th);
-		traderInstance ->RegisterFront("tcp://218.1.96.8:41205");
-		traderInstance->SubscribePrivateTopic(THOST_TERT_RESUME);
-		traderInstance->SubscribePublicTopic(THOST_TERT_RESUME);
-		traderInstance -> Init();
-		WaitForSingleObject(g_hEvent, INFINITE);
-		ResetEvent(g_hEvent);
+		if(traderInstance == NULL){
+			traderInstance = CThostFtdcTraderApi::CreateFtdcTraderApi();
+			traderInstance->RegisterSpi(&th);
+			traderInstance ->RegisterFront("tcp://180.166.165.179:41205");
+			traderInstance->SubscribePrivateTopic(THOST_TERT_RESUME);
+			traderInstance->SubscribePublicTopic(THOST_TERT_RESUME);
+			traderInstance -> Init();
+			WaitForSingleObject(g_hEvent, INFINITE);
+			ResetEvent(g_hEvent);
+		}
 		CThostFtdcReqUserLoginField reqUserLogin;		
 		strcpy_s(reqUserLogin.UserID, env->GetStringUTFChars(investorId, false));
 		strcpy_s(reqUserLogin.Password, env->GetStringUTFChars(password, false));
@@ -38,7 +40,6 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendLoginMes
 
 		traderInstance->ReqUserLogin(&reqUserLogin, 0);
 		WaitForSingleObject(g_hEvent, INFINITE);
-		ResetEvent(g_hEvent);
 
 }
 
@@ -287,7 +288,9 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_subscribeLis
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_unSubscribeListener
   (JNIEnv *env, jobject caller, jobject subscriber){
-
+		observers.clear();
+		traderInstance ->Release();
+		
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved){

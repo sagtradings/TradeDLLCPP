@@ -3,7 +3,7 @@
 class TraderEventHandler : public CThostFtdcTraderSpi{
 		public:
 		// constructor，which need a valid pointer to a CThostFtdcMduserApi instance
-		TraderEventHandler(CThostFtdcTraderApi *pUserApi) : m_pUserApi(pUserApi) {}
+		TraderEventHandler() {}
 		~TraderEventHandler() {}
 
 		virtual void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool isLast){
@@ -665,5 +665,5 @@ class TraderEventHandler : public CThostFtdcTraderSpi{
 
 	private:
 		// a pointer of CThostFtdcMduserApi instance
-		CThostFtdcTraderApi *m_pUserApi;
+		//CThostFtdcTraderApi *m_pUserApi;
 };

@@ -18,18 +18,25 @@ list<jobject> observers;
 
 
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendLoginMessage
-  (JNIEnv *env, jobject srcObject, jstring brokerId, jstring password, jstring investorId){
+  (JNIEnv *env, jobject srcObject, jstring brokerId, jstring password, jstring investorId, jstring connectionUrl){
 
 		
 		if(traderInstance == NULL){
 			traderInstance = CThostFtdcTraderApi::CreateFtdcTraderApi();
 			traderInstance->RegisterSpi(&th);
-			traderInstance ->RegisterFront("tcp://180.166.165.179:41205");
+			int urlLength = env->GetStringLength(connectionUrl);
+			char * writable = new char[urlLength + 1];
+			printf("the length is %i", urlLength);
+			writable[urlLength + 1] = '\0';
+			strcpy_s(writable, urlLength + 1, env->GetStringUTFChars(connectionUrl, false));
+			traderInstance ->RegisterFront(writable);
+			printf("initing\n");
 			traderInstance->SubscribePrivateTopic(THOST_TERT_RESUME);
 			traderInstance->SubscribePublicTopic(THOST_TERT_RESUME);
 			traderInstance -> Init();
 			WaitForSingleObject(g_hEvent, INFINITE);
 			ResetEvent(g_hEvent);
+			delete[] writable;
 		}
 		CThostFtdcReqUserLoginField reqUserLogin;		
 		strcpy_s(reqUserLogin.UserID, env->GetStringUTFChars(investorId, false));

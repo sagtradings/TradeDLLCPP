@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     nativeinterfaces_TradingNativeInterface
  * Method:    sendLoginMessage
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendLoginMessage
-  (JNIEnv *, jobject, jstring, jstring, jstring);
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
 
 /*
  * Class:     nativeinterfaces_TradingNativeInterface
@@ -54,8 +54,6 @@ JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_unSubscribeL
  */
 JNIEXPORT void JNICALL Java_nativeinterfaces_TradingNativeInterface_sendSettlementReqest
   (JNIEnv *, jobject, jstring, jstring);
-
-
 
 #ifdef __cplusplus
 }
